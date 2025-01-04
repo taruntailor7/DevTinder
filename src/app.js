@@ -1,13 +1,23 @@
 const express = require("express");
+const connectDB = require("./config/database");
 
 const app = express();
 
-const port = 3000;
+app.get("/", (req, res) => {
+  res.send("Response from Server!");
+});
 
-app.use((req, res) => {
-    res.send("Hello from express server!!");
-})
+const port = process.env.PORT || 5000;
 
-app.listen(port, () => {
-    console.log('Server is listening on port:', port);
-})
+connectDB()
+  .then(() => {
+    // First connect with Database then listen for the request! (This is good way)
+    console.log("Database Connected Successfully!");
+    app.listen(port, () => {
+      console.log("Server is listening on port:", port);
+    });
+  })
+  .catch((err) => {
+    console.log("Rrror while connecting with Database", err);
+    console.log("Database is not Connected!");
+  });
