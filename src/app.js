@@ -14,7 +14,7 @@ app.post("/signup", async (req, res) => {
     firstName: "Tarun",
     lastName: "Tailor",
     email: "tarun@tailor.com",
-    password: "Tarun@12"
+    password: "" // Random
   });
 
   try {
