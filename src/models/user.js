@@ -20,6 +20,8 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         required: true,
+        minLength: 8,
+        maxLength: 12,
     },
     age: {
         type: Number,
@@ -35,6 +37,7 @@ const userSchema = new mongoose.Schema({
     },
     photoUrl: {
         type: String,
+        default: 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg'
     },
     about: {
         type: String,
@@ -43,6 +46,6 @@ const userSchema = new mongoose.Schema({
     skills: {
         type: [String],
     },
-}, { timestamps: ture });
+}, { timestamps: true });
 
 module.exports = mongoose.model("User", userSchema);
