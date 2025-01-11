@@ -39,7 +39,7 @@ app.post("/signup", async (req, res) => {
     await user.save();
     res.send("User Added successfully!");
   } catch(err) {
-    res.status(400).send("Something went wrong!");
+    res.status(400).send(err.message);
   }
   
 });
@@ -63,14 +63,14 @@ app.patch("/user/:userId", async (req, res) => {
     if(!isUpdateAllowed) {
       throw new Error("Update not allowed");
     }
-    if(data.skills.length > 10) {
+    if(data.skills?.length > 10) {
       throw new Error("Skills cannot be more than 10");
     }
     const user = await User.findByIdAndUpdate({_id: userId}, data, {
       returnDocument: "after", // by default value is "before"
       runValidators: true,
     });
-    res.status(200).send("User updated sucessfully!");
+    res.send("User updated sucessfully!");
   } catch (error) {
     res.status(400).send("UPDATE FAILED:" + error.message);
   }
