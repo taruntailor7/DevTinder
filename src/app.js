@@ -4,10 +4,13 @@ const User = require("./models/user");
 const { validateSignUpDate } = require("./utils/validation");
 const bcrypt = require('bcrypt');
 const validator = require('validator');
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 
 const app = express();
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.get("/", (req, res) => {
   res.send("Response from Server!");
@@ -55,7 +58,7 @@ app.post("/signup", async (req, res) => {
     await user.save();
     res.send("User Added successfully!");
   } catch (err) {
-    res.status(400).send("ERROR : " + err.message);
+    res.status(400).send("ERROR while signup: " + err.message);
   }
 });
 
@@ -75,16 +78,43 @@ app.post("/login", async (req, res) => {
     }
     
     const isPasswordValid = await bcrypt.compare(password, user.password);
-
+    
     if(isPasswordValid) {
+      const token = await jwt.sign({_id: user._id}, "DEV@Tinder@7");
+
+      // Add token token to the cookie and send the response back to the user
+      res.cookie("token", token)
       res.send("Login Successfull!");
     } else {
       throw new Error("Invalid Credentials!")
     }
   } catch (err) {
-    res.status(400).send("ERROR : " + err.message);
+    res.status(400).send("ERROR while login: " + err.message);
   }
 });
+
+app.get("/profile", async (req, res) => {
+  try {
+    const cookies = req.cookies;
+    const { token } = cookies;
+    if (!token) {
+      throw new Error("Invalid Token!");
+    }
+
+    const decodedMessage = await jwt.verify(token, "DEV@Tinder@7");
+    const { _id } = decodedMessage;
+
+    const user = await User.findById(_id);
+    console.log('user', user);
+    if(!user) {
+      throw new Error("User does not exist!")
+    }
+
+    res.send(user);
+  } catch (err) {
+    res.status(400).send("ERROR : " + err.message);
+  }
+})
 
 app.delete("/user", async (req, res) => {
   const userId = req.body.userId;
@@ -131,6 +161,6 @@ connectDB()
     });
   })
   .catch((err) => {
-    console.log("Rrror while connecting with Database", err);
+    console.log("Error while connecting with Database", err);
     console.log("Database is not Connected!");
   });
