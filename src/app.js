@@ -1,6 +1,9 @@
 const express = require("express");
 const connectDB = require("./config/database");
-const User = require('./models/user');
+const User = require("./models/user");
+const { validateSignUpDate } = require("./utils/validation");
+const bcrypt = require('bcrypt');
+const validator = require('validator');
 
 const app = express();
 
@@ -14,34 +17,73 @@ app.get("/feed", async (req, res) => {
   try {
     const users = await User.find({});
     res.send(users);
-  } catch(err) {
+  } catch (err) {
     res.status(400).send("Something went wrong!");
   }
 });
 
 app.get("/user", async (req, res) => {
   try {
-    const user = await User.findOne({email: req.body.email});
-    if(!user) {
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) {
       return res.status(404).send("User not found!");
     }
     res.send(user);
-  } catch(err) {
+  } catch (err) {
     res.status(400).send("Something went wrong!");
   }
 });
 
 app.post("/signup", async (req, res) => {
-  // Crearting a new instance of the User model
-  const user = new User(req.body);
-
   try {
+    // Validate the data
+    validateSignUpDate(req);
+
+    const {firstName, lastName, email, password} = req.body;
+
+    // Encrypt the password
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Crearting a new instance of the User model
+    const user = new User({
+      firstName,
+      lastName,
+      email,
+      password: passwordHash
+    });
+
     await user.save();
     res.send("User Added successfully!");
-  } catch(err) {
-    res.status(400).send(err.message);
+  } catch (err) {
+    res.status(400).send("ERROR : " + err.message);
   }
-  
+});
+
+app.post("/login", async (req, res) => {
+  try {
+    const {email, password} = req.body;
+    // Validate the data
+    const isEmailExist = validator.isEmail(email);
+
+    if(!isEmailExist) {
+      throw new Error("Invalid Credentials!")
+    }
+
+    const user = await User.findOne({email: email})
+    if(!user) {
+      throw new Error("Invalid Credentials!")
+    }
+    
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if(isPasswordValid) {
+      res.send("Login Successfull!");
+    } else {
+      throw new Error("Invalid Credentials!")
+    }
+  } catch (err) {
+    res.status(400).send("ERROR : " + err.message);
+  }
 });
 
 app.delete("/user", async (req, res) => {
@@ -52,21 +94,23 @@ app.delete("/user", async (req, res) => {
   } catch (error) {
     res.status(400).send("Something went wrong!");
   }
-})
+});
 
 app.patch("/user/:userId", async (req, res) => {
   const userId = req.params?.userId;
   const data = req.body;
   try {
     const ALLOWED_UPDATED = ["photoUrl", "about", "gender", "age", "skills"];
-    const isUpdateAllowed = Object.keys(data).every((k) => ALLOWED_UPDATED.includes(k));
-    if(!isUpdateAllowed) {
+    const isUpdateAllowed = Object.keys(data).every((k) =>
+      ALLOWED_UPDATED.includes(k)
+    );
+    if (!isUpdateAllowed) {
       throw new Error("Update not allowed");
     }
-    if(data.skills?.length > 10) {
+    if (data.skills?.length > 10) {
       throw new Error("Skills cannot be more than 10");
     }
-    const user = await User.findByIdAndUpdate({_id: userId}, data, {
+    const user = await User.findByIdAndUpdate({ _id: userId }, data, {
       returnDocument: "after", // by default value is "before"
       runValidators: true,
     });
@@ -74,7 +118,7 @@ app.patch("/user/:userId", async (req, res) => {
   } catch (error) {
     res.status(400).send("UPDATE FAILED:" + error.message);
   }
-})
+});
 
 const port = process.env.PORT || 5000;
 
