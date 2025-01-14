@@ -1,17 +1,19 @@
 const express = require("express");
 const connectDB = require("./config/database");
 const User = require("./models/user");
-const { validateSignUpDate } = require("./utils/validation");
-const bcrypt = require('bcrypt');
-const validator = require('validator');
 const cookieParser = require("cookie-parser");
-const jwt = require("jsonwebtoken");
-const { userAuth } = require("./middlewares/auth");
+const authRouter = require("./routes/auth");
+const profileRouter = require("./routes/profile");
+const requestRouter = require("./routes/request");
 
 const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
+
+app.use('/auth', authRouter);
+app.use('/profile', profileRouter);
+app.use('/request', requestRouter);
 
 app.get("/", (req, res) => {
   res.send("Response from Server!");
@@ -37,73 +39,6 @@ app.get("/user", async (req, res) => {
     res.status(400).send("Something went wrong!");
   }
 });
-
-app.post("/signup", async (req, res) => {
-  try {
-    // Validate the data
-    validateSignUpDate(req);
-
-    const {firstName, lastName, email, password} = req.body;
-
-    // Encrypt the password
-    const passwordHash = await bcrypt.hash(password, 10);
-
-    // Crearting a new instance of the User model
-    const user = new User({
-      firstName,
-      lastName,
-      email,
-      password: passwordHash
-    });
-
-    await user.save();
-    res.send("User Added successfully!");
-  } catch (err) {
-    res.status(400).send("ERROR while signup: " + err.message);
-  }
-});
-
-app.post("/login", async (req, res) => {
-  try {
-    const {email, password} = req.body;
-    // Validate the data
-    const isEmailExist = validator.isEmail(email);
-
-    if(!isEmailExist) {
-      throw new Error("Invalid Credentials!")
-    }
-
-    const user = await User.findOne({email: email})
-    if(!user) {
-      throw new Error("Invalid Credentials!")
-    }
-    
-    const isPasswordValid = await user.validatePassword(password);
-    
-    if(isPasswordValid) {
-      const token = await user.getJWT();
-
-      // Add token token to the cookie and send the response back to the user
-      res.cookie("token", token, {
-        expires: new Date(Date.now() + 8 * 3600000), // Expires in 8 hours
-      })
-      res.send("Login Successfull!");
-    } else {
-      throw new Error("Invalid Credentials!")
-    }
-  } catch (err) {
-    res.status(400).send("ERROR while login: " + err.message);
-  }
-});
-
-app.get("/profile", userAuth, async (req, res) => {
-  try {
-    const user = req.user;
-    res.send(user);
-  } catch (err) {
-    res.status(400).send("ERROR : " + err.message);
-  }
-})
 
 app.delete("/user", async (req, res) => {
   const userId = req.body.userId;
