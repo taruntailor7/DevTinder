@@ -22,6 +22,12 @@ const connectionRequestSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Created Compound index on fromUserId and toUserId value can be(1, -1, 2d...)
+connectionRequestSchema.index({ fromUserId: 1, toUserId: 1 }); 
+
+// Index on one column either like this or make index:true
+// connectionRequestSchema.index({ status: 1}); 
+
 connectionRequestSchema.pre("save", function(next) {
   const connectionRequest = this;
   // Check if the fromUserid is same as toUserId

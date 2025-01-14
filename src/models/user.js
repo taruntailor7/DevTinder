@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
         required: true,
         minLength: 3,
         maxLength: 50,
+        index: true, // We are indexing firstname so our search will be faster
     },
     lastName: {
         type: String,
@@ -17,7 +18,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         lowercase: true,
         required: true,
-        unique: true,
+        unique: true, // if we make unique true then mongo db automatically creates a index for that field and unique index is more faster then normal
         trim: true,
         validate(value) {
             if(!validator.isEmail(value)) {
@@ -68,6 +69,12 @@ const userSchema = new mongoose.Schema({
         type: [String],
     },
 }, { timestamps: true });
+
+// Created Compound index on firstName and lastName, value can be(1, -1, 2d...)
+userSchema.index({ firstName: 1, lastName: 1 }); 
+
+// Index on one column either like this or make index:true
+userSchema.index({ gender: 1 });
 
 // Don't use arrow functions here below as arrow functions 
 // does't not have there own this
