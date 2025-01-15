@@ -71,6 +71,12 @@ userRouter.get("/feed", userAuth, async (req, res) => {
   try {
     const loggedInUser = req.user;
 
+    const page = req.query.page || 1;
+    let limit = req.query.limit || 10;
+    limit = limit > 50 ? 50 : limit;
+
+    const skip = (page - 1) * limit;
+
     const connectionRequest = await ConnectionRequests.find({
       $or: [
         { fromUserId: loggedInUser._id },
@@ -89,7 +95,7 @@ userRouter.get("/feed", userAuth, async (req, res) => {
         { _id: { $nin: Array.from(hideUsersFromFeed)} },
         { _id: { $ne: loggedInUser._id} },
       ]
-    }).select(USER_SAFE_DATA);
+    }).select(USER_SAFE_DATA).skip(skip).limit(limit);
     
     res.json({
       message: "Data fetched successfully!",
