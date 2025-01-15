@@ -1,7 +1,8 @@
 const express = require("express");
 const { userAuth } = require("../middlewares/auth");
 const userRouter = express.Router();
-const ConnectionRequests = require("../models/connectionRequest")
+const ConnectionRequests = require("../models/connectionRequest");
+const User = require("../models/user");
 
 const USER_SAFE_DATA =  "firstName lastName photoUrl age gender skills about";
 
@@ -70,10 +71,29 @@ userRouter.get("/feed", userAuth, async (req, res) => {
   try {
     const loggedInUser = req.user;
 
+    const connectionRequest = await ConnectionRequests.find({
+      $or: [
+        { fromUserId: loggedInUser._id },
+        { toUserId: loggedInUser._id },
+      ],
+    }).select("fromUserId toUserId");
+
+    const hideUsersFromFeed = new Set();
+    connectionRequest.forEach((req) => {
+      hideUsersFromFeed.add(req.fromUserId.toString());
+      hideUsersFromFeed.add(req.toUserId.toString());
+    });
+
+    const users = await User.find({
+      $and: [
+        { _id: { $nin: Array.from(hideUsersFromFeed)} },
+        { _id: { $ne: loggedInUser._id} },
+      ]
+    }).select(USER_SAFE_DATA);
     
     res.json({
-        message: "Data fetched successfully!",
-        // data: data
+      message: "Data fetched successfully!",
+      data: users
     });
   } catch (error) {
     res.status(400).json({
