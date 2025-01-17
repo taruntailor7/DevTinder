@@ -51,6 +51,7 @@ authRouter.post("/login", async (req, res) => {
     if (isPasswordValid) {
       // using here moongose schema methods
       const token = await user.getJWT();
+      const { password, ...userWithoutPassword } = user.toObject();
 
       // Add token token to the cookie and send the response back to the user
       res.cookie("token", token, {
@@ -58,7 +59,7 @@ authRouter.post("/login", async (req, res) => {
       });
       res.json({
         message: "Login Successfull!",
-        data: user,
+        data: userWithoutPassword,
       });
     } else {
       throw new Error("Invalid Credentials!");
