@@ -9,6 +9,7 @@ const cors = require("cors");
 // require("./utils/cronJobs"); // commenting to not run cron
 const http = require("http");
 const initializeSocket = require("./utils/socket");
+const chatRouter = require("./routes/chat");
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use('/auth', authRouter);
 app.use('/profile', profileRouter);
 app.use('/request', requestRouter);
 app.use("/user", userRouter);
+app.use("/chat", chatRouter);
 
 app.get("/", (req, res) => {
   res.send("Response from Server!");
