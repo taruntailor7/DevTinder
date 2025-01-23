@@ -6,7 +6,9 @@ const profileRouter = require("./routes/profile");
 const requestRouter = require("./routes/request");
 const userRouter = require("./routes/user");
 const cors = require("cors");
-require("./utils/cronJobs");
+// require("./utils/cronJobs"); // commenting to not run cron
+const http = require("http");
+const initializeSocket = require("./utils/socket");
 
 const app = express();
 
@@ -26,13 +28,18 @@ app.get("/", (req, res) => {
   res.send("Response from Server!");
 });
 
+// For Creating websocket-server
+const server = http.createServer(app);
+
+initializeSocket(server);
+
 const port = process.env.PORT || 5000;
 
 connectDB()
   .then(() => {
     // First connect with Database then listen for the request! (This is good way)
     console.log("Database Connected Successfully!");
-    app.listen(port, () => {
+    server.listen(port, () => {
       console.log("Server is listening on port:", port);
     });
   })
