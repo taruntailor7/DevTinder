@@ -22,9 +22,6 @@ const initializeSocket = (server) => {
 
     socket.on("joinChat", ({ firstname, userId, targetUserId }) => {
       const roomId = getSecretRoomId(userId, targetUserId); // sorting for making roomId same for 2 users
-
-      console.log(firstname + " joined room: " + roomId);
-
       socket.join(roomId);
     });
 
@@ -33,8 +30,7 @@ const initializeSocket = (server) => {
       async ({ firstname, userId, targetUserId, text }) => {
         try {
           const roomId = getSecretRoomId(userId, targetUserId);
-          console.log(firstname + " : " + text);
-
+          // TODO: Before Sending message check that targetUserId is my friend or not
           // Save message to the Database
           let chat = await Chat.findOne({
             participants: { $all: [userId, targetUserId] },

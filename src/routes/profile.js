@@ -39,7 +39,6 @@ profileRouter.patch("/edit", userAuth, async (req, res) => {
 profileRouter.patch("/updatePassword", userAuth, async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
-    console.log('req', req.body);
     const loggeedInUser = req.user;
 
     const isOldPasswordValid = await loggeedInUser.validatePassword(oldPassword);
